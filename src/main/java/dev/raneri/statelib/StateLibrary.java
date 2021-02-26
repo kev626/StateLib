@@ -1,8 +1,14 @@
 package dev.raneri.statelib;
 
+import dev.raneri.statelib.event.StateTransitionEvent;
+import dev.raneri.statelib.event.StateTransitionEventHandler;
+import java.util.List;
+
 public class StateLibrary {
 	
 	private State currentState;
+	
+	private List<StateTransitionEventHandler> transitionHandlerList;
 	
 	/**
 	 * Initialize the state machine with an initial state.
@@ -24,6 +30,9 @@ public class StateLibrary {
 		if (next != null && next != currentState) {
 			currentState.onExit(next);
 			State oldState = currentState;
+			StateTransitionEvent event = new StateTransitionEvent(oldState, next);
+			transitionHandlerList.forEach(h -> h.onTransition(event));
+			next = event.getFinalState();
 			currentState = next;
 			currentState.onEntry(oldState);
 		}
@@ -38,6 +47,15 @@ public class StateLibrary {
 		if (currentState == null) throw new IllegalStateException("State machine is not initialized and cannot be shut down!");
 		currentState.onExit(null);
 		currentState = null;
+	}
+	
+	/**
+	 * Attach a handler to run when a state transition occurs
+	 * @param handler the handler to run when a state transition occurs
+	 */
+	public void addStateTransitionHandler(StateTransitionEventHandler handler) {
+		if (handler == null) throw new NullPointerException("handler");
+		transitionHandlerList.add(handler);
 	}
 	
 }
