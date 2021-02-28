@@ -1,13 +1,17 @@
 package dev.raneri.statelib;
 
+import dev.raneri.statelib.event.EventHandler;
 import dev.raneri.statelib.event.LoopEndEvent;
 import dev.raneri.statelib.event.LoopStartEvent;
 import dev.raneri.statelib.event.StateTransitionEvent;
-import dev.raneri.statelib.event.EventHandler;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class StateLibrary {
+	
+	private static Logger logger = Logger.getLogger("StateLib");
 	
 	private State currentState;
 	
@@ -32,22 +36,26 @@ public class StateLibrary {
 	public void loop() {
 		if (currentState == null) throw new IllegalStateException("State machine is not yet initialized!");
 		LoopStartEvent startEvent = new LoopStartEvent(currentState);
-		loopStartHandlerList.forEach(h -> h.onEvent(startEvent));
-		State next = currentState.getNextState();
-		if (next != null && next != currentState) {
-			currentState.onExit(next);
-			State oldState = currentState;
-			StateTransitionEvent transitionEvent = new StateTransitionEvent(oldState, next);
-			transitionHandlerList.forEach(h -> h.onEvent(transitionEvent));
-			next = transitionEvent.getFinalState();
-			currentState = next;
-			currentState.onEntry(oldState);
+		loopStartHandlerList.forEach(h -> h.execute(startEvent));
+		try {
+			State next = currentState.getNextState();
+			if (next != null && next != currentState) {
+				currentState.onExit(next);
+				State oldState = currentState;
+				StateTransitionEvent transitionEvent = new StateTransitionEvent(oldState, next);
+				transitionHandlerList.forEach(h -> h.execute(transitionEvent));
+				next = transitionEvent.getFinalState();
+				currentState = next;
+				currentState.onEntry(oldState);
+			}
+
+			currentState.loop();
+		} catch (Throwable e) {
+			logger.log(Level.SEVERE, "Exception while ticking state machine", e);
 		}
 		
-		currentState.loop();
-		
 		LoopEndEvent endEvent = new LoopEndEvent(currentState);
-		loopEndHandlerList.forEach(h -> h.onEvent(endEvent));
+		loopEndHandlerList.forEach(h -> h.execute(endEvent));
 	}
 	
 	/**
