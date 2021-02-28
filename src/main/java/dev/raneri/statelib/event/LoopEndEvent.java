@@ -1,0 +1,22 @@
+package dev.raneri.statelib.event;
+
+import dev.raneri.statelib.State;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public class LoopEndEvent {
+	
+	@Nullable private final State state;
+	
+	public LoopEndEvent(@NotNull State state) {
+		this.state = state;
+	}
+	
+	/**
+	 * Gets the state the state machine is currently in
+	 * @return the state the state machine is currently in
+	 */
+	public @NotNull State getState() {
+		return state;
+	}
+}
