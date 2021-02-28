@@ -64,7 +64,10 @@ public class StateLibrary {
 	public void shutdown() {
 		if (currentState == null) throw new IllegalStateException("State machine is not initialized and cannot be shut down!");
 		currentState.onExit(null);
+		State oldState = currentState;
 		currentState = null;
+		StateTransitionEvent transitionEvent = new StateTransitionEvent(oldState, null);
+		transitionHandlerList.forEach(h -> h.execute(transitionEvent));
 	}
 	
 	/**
